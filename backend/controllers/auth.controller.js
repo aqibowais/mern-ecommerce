@@ -1,4 +1,3 @@
-import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import {
   generateTokens,
@@ -8,7 +7,6 @@ import {
   getTokenFromRedis,
 } from "../lib/auth.utils.js";
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
 export const handleUserSignup = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -135,33 +133,14 @@ export const handleUserRefreshToken = (req, res) => {
   }
 };
 
-export const handleUpdateProfileImage = async (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body; // Changed from req.file to req.body
-
-    const userId = req.user._id; //user data alrady set from the protectRoute middleware
-
-    if (!profilePic)
-      return res.status(400).json({ message: "Profile Image is required" });
-
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { profilePic: uploadResponse.secure_url }, // Fixed typo: secureUrl -> secure_url
-      { new: true }
-    );
-    res.status(200).json(updatedUser);
+    const user = req.user; //as already set in protectRoute middleware
+    res.status(200).json(user);
   } catch (error) {
-    console.log("Error in update profile controller :", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const checkAuth = (req, res) => {
-  try {
-    return res.status(200).json(req.user);
-  } catch (error) {
-    console.log("Error in check Auth controller :", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    console.log("Error in getting user profile", error.message);
+    res
+      .status(500)
+      .json({ message: `Internal server error : ${error.message}` });
   }
 };

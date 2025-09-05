@@ -69,7 +69,7 @@ export const deleteProduct = async (req, res) => {
 
     //first delete image from cloudinary if it exists
     if (product.image) {
-      const publicId = product.image.split("/").pop.split(".")[0];
+      const publicId = product.image.split("/").pop().split(".")[0];
       //example image url = https://res.cloudinary.com/.../products/abc.jpg
       // then publicId = abc
 
