@@ -97,7 +97,7 @@ export const getRecommendedProducts = async (req, res) => {
   try {
     const products = await Product.aggregate([
       {
-        $sample: { size: 5 },
+        $sample: { size: 4 },
       },
       {
         $project: {
@@ -110,7 +110,7 @@ export const getRecommendedProducts = async (req, res) => {
       },
     ]);
 
-    res.status(200).json({ products });
+    res.status(200).json( products )
   } catch (error) {
     console.log("Error in getting recommended products", error.message);
     res

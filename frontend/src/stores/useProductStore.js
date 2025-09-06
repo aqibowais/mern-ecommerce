@@ -25,7 +25,6 @@ export const useProductStore = create((set,get)=>({
         try {
             const res = await axiosInstance.get("/products");
             set({products: res.data.products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), loading: false})
-            console.log("fetched products",get().products);
         } catch (error) {
             toast.error(error.response.data.message || "Error in Loading products");
             set({loading:false})

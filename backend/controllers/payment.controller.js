@@ -24,6 +24,7 @@ export const createCheckoutSession = async (req, res) => {
           },
           unit_amount: amount,
         },
+        quantity: product.quantity,
       };
     });
     let coupon = null;
@@ -40,7 +41,7 @@ export const createCheckoutSession = async (req, res) => {
       }
     }
 
-    const session = stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
@@ -65,6 +66,7 @@ export const createCheckoutSession = async (req, res) => {
       // if total amount is more than $200 then create new coupon and send it to user
       await createNewCoupon(req.user._id);
     }
+    // console.log("checkout session", session.id);
     res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
   } catch (error) {
     console.log("Error in creating checkout session", error.message);
@@ -78,8 +80,8 @@ export const createCheckoutSession = async (req, res) => {
 export const checkoutSessionSuccess = async(req,res)=>{
   try {
     const {sessionId} = req.body;
-    const session = stripe.checkout.sessions.retrieve(sessionId);
-
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+// console.log("session",session);
     if(session.payment_status === "paid"){
       if(session.metadata.couponCode){
         await Coupon.findOneAndUpdate({
@@ -87,7 +89,9 @@ export const checkoutSessionSuccess = async(req,res)=>{
           userId: req.user._id,
         },{isActive: false});
       }
-
+      else{
+        console.log("payment status",session.payment_status);
+      }
       //create new order
       const products = JSON.parse(session.metadata.products);
       const newOrder = new Order({
@@ -121,6 +125,16 @@ async function createStripeCoupon(discountPercentage) {
 }
 
 async function createNewCoupon(userId) {
+   // Check if user already has an active coupon
+    const existingCoupon = await Coupon.findOne({
+      userId,
+      isActive: true
+    });
+
+    if (existingCoupon) {
+      // If user already has an active coupon, don't create a new one
+      return existingCoupon;
+    }
   const newCoupon = new Coupon({
     code: "GIFT" + Math.random().toString(36).substring(2, 8).toUpperCase(),
     discountPercentage: 10,
